@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-
+from datetime import datetime
 #schemas for user
 class UserCreate(BaseModel):
     name: str
@@ -58,7 +58,37 @@ class VerifyResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
-#################
+#schemas for books
+class Book(BaseModel):
+    title: str
+    author: str
+    isbn: str
+    total_copies: Optional[int] = 0
+    borrowed_copies: Optional[int] = 0
+    available_copies: Optional[int] = 0
+
+class BookUpdateRequest (BaseModel) :
+    title: Optional[str]
+    author: Optional[str]
+    isbn: Optional[str]
+    total_copies: Optional[int]
+    borrowed_copies: Optional[int]
+    available_copies: Optional[int]
+
+class BorrowRequest(BaseModel):
+    book_id: int
+
+class BorrowResponse(BaseModel):
+    id: int
+    user_id: int
+    book_id: int
+    borrow_date: datetime
+    return_date: datetime | None
+
+    class Config:
+        orm_mode = True
+
+######
 class User(BaseModel):
     name:str
     email:str
