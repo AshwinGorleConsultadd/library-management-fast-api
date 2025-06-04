@@ -5,6 +5,7 @@ from jose import JWTError, jwt
 from .. import models, token, schemas
 from ..hashing import Hash
 from datetime import datetime, timedelta
+from ..models import BlacklistedToken
 
 FIXED_OTP = "1234"
 OTP_VALIDITY_MINUTES = 10
@@ -74,7 +75,10 @@ def refresh_token(request: schemas.TokenRefreshRequest):
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-def logout():
+def logout(db, user, token):
+    blacklisted = BlacklistedToken(token=token)
+    db.add(blacklisted)
+    db.commit()
     return {"message": "Logout successful"}
 
 def get_me(user, db):

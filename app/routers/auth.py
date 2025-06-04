@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from .. import database, schemas
 from ..controllers import auth
 from ..oauth2 import  get_current_user
+from ..oauth2 import oauth2_scheme
 router = APIRouter(tags=["Authentication"], prefix="/auth")
 
 @router.post('/login')
@@ -26,8 +27,8 @@ def refresh(request: schemas.TokenRefreshRequest):
     return auth.refresh_token(request)
 
 @router.post("/logout")
-def logout():
-    return {"msg": "Logged out"}
+def logout(user = Depends(get_current_user), db: Session = Depends(database.get_db), token: str = Depends(oauth2_scheme)):
+    return auth,logout(db,user,token)
 
 @router.get("/me", response_model=schemas.UserResponse)
 def me(user=Depends(get_current_user), db: Session = Depends(database.get_db)):

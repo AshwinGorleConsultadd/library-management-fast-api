@@ -43,3 +43,10 @@ class Borrow(Base):
 
     user = relationship("User", back_populates="borrows")
     book = relationship("Book", back_populates="borrows")
+
+class BlacklistedToken(Base):
+    __tablename__ = "blacklisted_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, nullable=False)
+    blacklisted_at = Column(DateTime, default=datetime.utcnow)
