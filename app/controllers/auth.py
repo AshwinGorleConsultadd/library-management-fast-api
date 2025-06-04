@@ -6,7 +6,7 @@ from .. import models, token, schemas
 from ..hashing import Hash
 from datetime import datetime, timedelta
 from ..models import BlacklistedToken
-
+from ..core import password
 FIXED_OTP = "1234"
 OTP_VALIDITY_MINUTES = 10
 
@@ -36,7 +36,8 @@ def signup(request: schemas.UserCreate, db: Session):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Email already registered")
 
-    # 1. Creatinf the new user
+    password.validate_password_strength(request.password)
+
     new_user = models.User(
         name=request.name,
         email=request.email,
@@ -58,6 +59,7 @@ def signup(request: schemas.UserCreate, db: Session):
 
 def change_password(user, request: schemas.ChangePasswordRequest, db: Session):
     db_user = db.query(models.User).filter(models.User.email == user["email"]).first()
+    password.validate_password_strength(request.new_password)
     if not Hash.verify(db_user.password, request.old_password):
         raise HTTPException(status_code=400, detail="Old password is incorrect")
     db_user.password = Hash.bcrypt(request.new_password)
