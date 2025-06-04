@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from .. import models, schemas
+from app import models, schemas
 from datetime import datetime
 
 # 1. Create a new book

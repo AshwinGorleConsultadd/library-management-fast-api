@@ -1,9 +1,8 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
-from .. import models, schemas, token
-from ..database import get_db
+from .. import models, token, schemas
 from ..hashing import Hash
 from datetime import datetime, timedelta
 

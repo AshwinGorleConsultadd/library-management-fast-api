@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from .. import models
-from .. import schemas, database
+from .. import database, schemas
 from ..controllers import auth
 from ..oauth2 import  get_current_user
 router = APIRouter(tags=["Authentication"], prefix="/auth")
@@ -31,6 +30,6 @@ def logout():
     return {"msg": "Logged out"}
 
 @router.get("/me", response_model=schemas.UserResponse)
-def me(user=Depends(get_current_user), db: Session = Depends(database.get_db) ):
+def me(user=Depends(get_current_user), db: Session = Depends(database.get_db)):
     return auth.get_me(user, db)
 
