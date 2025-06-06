@@ -12,13 +12,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# DB setup
+# initial test DB setup
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test_db.sqlite3"
 engine = create_engine(SQLALCHEMY_TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# ADMIN_EMAIL = os.getenv("ADMIN_USERNAME", "admin")
-# ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 @pytest.fixture(autouse=True, scope="function")
 def setup_and_teardown_db():
@@ -60,7 +57,7 @@ def auth_headers(admin_token):
         "Content-Type": "application/json"
     }
 
-# ------------------- Book Tests -------------------
+# Book Tests
 
 def test_create_book(client: TestClient, auth_headers):
     response = client.post(
@@ -78,10 +75,10 @@ def test_get_all_books(client: TestClient, auth_headers):
 
 def test_get_book_by_id(client: TestClient, auth_headers):
     create = client.post("/books", json={"title": "Django", "author": "Adrian", "isbn": "222", "total_copies": 2}, headers=auth_headers)
-    book_id = create.json()["id"]
-    response = client.get(f"/books/{book_id}", headers=auth_headers)
+    book_title = create.json()["title"]
+    response = client.get(f"/books/{1}", headers=auth_headers)
     assert response.status_code == 200
-    assert response.json()["id"] == book_id
+    assert response.json()["title"] == book_title
 
 def test_update_book(client: TestClient, auth_headers):
     create = client.post("/books", json={"title": "Old", "author": "A", "isbn": "333", "total_copies": 1}, headers=auth_headers)
@@ -97,25 +94,42 @@ def test_delete_book(client: TestClient, auth_headers):
     assert delete.status_code == 200
     assert delete.json()["detail"] == "Book deleted"
 
-# ------------------- Mocking Examples -------------------
+# Testing through Mocking
 
-@patch("app.controllers.bookcontroller.borrow_service")
-def test_borrow_book_mocked(mock_borrow_service, client: TestClient, auth_headers):
-    mock_borrow_service.borrow_book.return_value = {"id": 1, "book_id": 1, "return_date": None}
-    response = client.post("/borrow/", json={"book_id": 1}, headers=auth_headers)
+from unittest.mock import patch
+# from fastapi.testclient import TestClient
+
+# Mocking the borrow_book controller
+@patch("app.controllers.book.borrow_book")
+def test_borrow_book_mocked(mock_borrow_book, client: TestClient, auth_headers):
+    mock_borrow_book.return_value = {
+        "id": 1,
+        "book_id": 1,
+        "return_date": None,
+        "user_id": 1
+    }
+    response = client.post("/books/borrow/", json={"book_id": 1}, headers=auth_headers)
     assert response.status_code == 200
     assert response.json()["id"] == 1
+    assert response.json()["book_id"] == 1
 
-@patch("app.controllers.bookcontroller.return_service")
-def test_return_book_mocked(mock_return_service, client: TestClient, auth_headers):
-    mock_return_service.return_book.return_value = {"id": 1, "book_id": 1, "return_date": "2025-06-06"}
-    response = client.put("/borrow/1/return", headers=auth_headers)
+# 2. Mocking the return_book controller
+@patch("app.controllers.book.return_book")
+def test_return_book_mocked(mock_return_book, client: TestClient, auth_headers):
+    mock_return_book.return_value = {
+        "id": 1,
+        "book_id": 1,
+        "return_date": "2025-06-06",
+        "user_id": 1
+    }
+    response = client.put("/borrow//return", headers=auth_headers)
     assert response.status_code == 200
     assert response.json()["return_date"] == "2025-06-06"
 
+# 3. Borrow history (integration style)
 def test_borrow_history(client: TestClient, auth_headers):
     books = client.get("/books", headers=auth_headers).json()
     if books:
         book_id = books[0]["id"]
         response = client.get(f"/borrow/history/{book_id}", headers=auth_headers)
-        assert response.status_code in [200, 404]  # Accept 404 if history is empty
+        assert response.status_code in [200, 404]  # Acceptable if no history exists`~

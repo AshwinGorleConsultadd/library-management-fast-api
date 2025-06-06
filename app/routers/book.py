@@ -43,13 +43,13 @@ def delete_book(
     book.delete_book(book_id, db)
 
 # Borrow related routes
-
+@router.post("/borrow", response_model=schemas.BorrowResponse)
 def borrow(
     request: schemas.BorrowRequest,
     db: Session = Depends(database.get_db),
     user=Depends(get_current_user)
 ):
-    return book.borrow_book(request, db, user)
+    return book.borrow_book(user, request, db)
 
 @router.put("/return/{borrow_id}", response_model=schemas.BorrowResponse)
 def return_book(

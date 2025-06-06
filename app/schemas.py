@@ -66,6 +66,20 @@ class Book(BaseModel):
     borrowed_copies: Optional[int] = 0
     available_copies: Optional[int] = 0
 
+class BookBase(BaseModel):
+    title: str
+    author: str
+    isbn: str
+    total_copies: int
+
+class BookResponse(BookBase):
+    id: int
+    available_copies: int
+    borrowed_copies: int
+
+    class Config:
+        orm_mode = True
+
 class BookUpdateRequest (BaseModel) :
     title: Optional[str]
     author: Optional[str]
@@ -89,6 +103,7 @@ class BorrowResponse(BaseModel):
 
 ######
 class User(BaseModel):
+    id: int
     name:str
     email:str
     password:str

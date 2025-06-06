@@ -3,7 +3,7 @@ from app import models, schemas
 from datetime import datetime
 
 # 1. Create a new book
-def create_book(request: schemas.Book, db: Session):
+def create_book(request: schemas.BookResponse, db: Session):
     book = models.Book(
         title=request.title,
         author=request.author,
@@ -63,21 +63,27 @@ def delete_book(book_id: int, db: Session):
 ## borrow related controllers
 
 def borrow_book(user: dict, request: schemas.BorrowRequest, db: Session):
-    book = db.query(models.Book).filter(models.Book.id == request.book_id).first()
-    if not book or book.available_copies <= 0:
-        return None
+    try:
+        book = db.query(models.Book).filter(models.Book.id == request.book_id).first()
+        if not book or book.available_copies <= 0:
+            return None
 
-    book.borrowed_copies += 1
-    book.available_copies -= 1
+        book.borrowed_copies += 1
+        book.available_copies -= 1
 
-    borrow = models.Borrow(
-        user_id=user["id"],
-        book_id=request.book_id
-    )
-    db.add(borrow)
-    db.commit()
-    db.refresh(borrow)
-    return borrow
+        borrow = models.Borrow(
+            user_id=user["id"],
+            book_id=request.book_id
+        )
+        db.add(borrow)
+        db.commit()
+        db.refresh(borrow)
+        return borrow
+
+    except Exception as e:
+        print("ERROR IN BORROW BOOK:", e)
+        raise
+
 
 def return_book(borrow_id: int, user: dict, db: Session):
     borrow = db.query(models.Borrow).filter(models.Borrow.id == borrow_id).first()

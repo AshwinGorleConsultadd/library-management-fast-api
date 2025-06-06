@@ -25,7 +25,7 @@ def login(request: OAuth2PasswordRequestForm, db: Session):
                             detail="Incorrect password")
 
     access_token = token.create_access_token(
-        data={"sub": user.email, "role": user.role}
+        data={"sub": user.email, "role": user.role, "id": user.id}
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -72,7 +72,8 @@ def refresh_token(request: schemas.TokenRefreshRequest):
         payload = jwt.decode(request.refresh_token, "secret", algorithms=["HS256"])
         email = payload.get("sub")
         role = payload.get("role")
-        new_token = token.create_access_token(data={"sub": email, "role": role})
+        id = payload.get("id")
+        new_token = token.create_access_token(data={"sub": email, "role": role, "id": id})
         return {"access_token": new_token, "token_type": "bearer"}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
