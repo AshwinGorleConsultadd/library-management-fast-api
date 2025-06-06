@@ -42,7 +42,7 @@ def signup(request: schemas.UserCreate, db: Session):
         name=request.name,
         email=request.email,
         password=Hash.bcrypt(request.password),
-        role=request.role,
+
         is_varified=False,
         otp=FIXED_OTP,
         otp_expires=datetime.utcnow() + timedelta(minutes=OTP_VALIDITY_MINUTES)

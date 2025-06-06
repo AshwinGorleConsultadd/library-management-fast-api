@@ -28,7 +28,7 @@ def refresh(request: schemas.TokenRefreshRequest):
 
 @router.post("/logout")
 def logout(user = Depends(get_current_user), db: Session = Depends(database.get_db), token: str = Depends(oauth2_scheme)):
-    return auth,logout(db,user,token)
+    return auth.logout(db,user,token)
 
 @router.get("/me", response_model=schemas.UserResponse)
 def me(user=Depends(get_current_user), db: Session = Depends(database.get_db)):

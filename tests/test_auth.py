@@ -1,4 +1,4 @@
-
+import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -6,75 +6,77 @@ from sqlalchemy.orm import sessionmaker
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import User
-from app.hashing import Hash
+from app.core.init_admin import create_admin
+from dotenv import load_dotenv
 
+load_dotenv()
+
+# DB setup
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test_db.sqlite3"
-
-engine = create_engine(
-    SQLALCHEMY_TEST_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+engine = create_engine(SQLALCHEMY_TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Overriding the get_db dependency to use the testing database
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
+ADMIN_EMAIL = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
-app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture(autouse=True)
-def create_test_database():
+@pytest.fixture(autouse=True, scope="function")
+def setup_and_teardown_db():
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
 
+@pytest.fixture(scope="function")
+def db():
+    db = TestingSessionLocal()
+    try:
+        create_admin(db)  # ✅ Creates admin user in test DB
+        yield db
+    finally:
+        db.close()
 
-client = TestClient(app)
+@pytest.fixture(scope="function")
+def client(db):
+    def override_get_db():
+        try:
+            yield db
+        finally:
+            db.close()
+    app.dependency_overrides[get_db] = override_get_db
+    return TestClient(app)
 
+# Begin tests using admin only
 
-
-def create_verified_user(db, email="ashwin@example.com", password="Ashwin@798724"):
-    hashed_password = Hash.bcrypt(password)
-    user = User(
-        email=email,
-        password=hashed_password,
-        role="user",
-        is_varified=True, ## jsut doing for testing purpose
+def test_admin_login_success(client):
+    response = client.post(
+        "/auth/login",
+        data={"username": "admin@example.com", "password": "admin123"}  # ✅ Correct format
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
 
+    print("response---", response.json())
+    assert response.status_code == 200
+    assert "access_token" in response.json()
 
 def test_signup_then_verify_and_login(client):
-    # Signup
+    # check Signup
     signup_payload = {
         "name": "Bob",
         "email": "bob@example.com",
-        "password": "Val1dP@ssword",
-        "role": "user"
+        "password": "Val1dP@ssword"
     }
     response = client.post("/auth/signup", json=signup_payload)
     assert response.status_code == 200
-    data = response.json()
-    assert data["message"] == "Signup successful"
+    assert response.json()["message"] == "Signup successful"
 
-    # Verify with fixed OTP
+    #check varify
     verify_payload = {
         "email": "bob@example.com",
         "otp": "1234"
     }
-    response = client.post("/auth/verify", json=verify_payload)
+    response = client.post("/auth/varify_email", json=verify_payload)
     assert response.status_code == 200
     assert "access_token" in response.json()
 
-    # Login
+    # check login
     login_response = client.post(
         "/auth/login",
         data={"username": "bob@example.com", "password": "Val1dP@ssword"}
@@ -87,22 +89,19 @@ def test_verify_with_invalid_otp_fails(client):
     signup_payload = {
         "name": "Charlie",
         "email": "charlie@example.com",
-        "password": "ValidP@ss1",
-        "role": "user"
+        "password": "ValidP@ss1"
     }
     client.post("/auth/signup", json=signup_payload)
-
-    # Try verifying with wrong OTP
+    # keeping Invalid OTP
     verify_payload = {
         "email": "charlie@example.com",
         "otp": "0000"
     }
-    response = client.post("/auth/verify", json=verify_payload)
+    response = client.post("/auth/varify_email", json=verify_payload)
     assert response.status_code == 400
     assert response.json()["detail"] == "Invalid or expired OTP"
 
-
-def test_login_fails_when_user_does_not_exist():
+def test_login_fails_when_user_does_not_exist(client):
     response = client.post(
         "/auth/login",
         data={"username": "nonexistent@example.com", "password": "irrelevant"}
@@ -110,34 +109,27 @@ def test_login_fails_when_user_does_not_exist():
     assert response.status_code == 404
     assert response.json()["detail"] == "Invalid Credentials"
 
-
-def test_login_fails_when_password_incorrect():
-    # Creating a verified user manually via DB
-    db = TestingSessionLocal()
-    user = create_verified_user(db, email="dave@example.com", password="Strong1@Pass")
-    db.close()
-
-    # Attempt login with wrong password
+def test_login_fails_when_password_incorrect(client):
+    # Attempting login with wrong password for admin
     login_response = client.post(
         "/auth/login",
-        data={"username": "dave@example.com", "password": "WrongPassword"}
+        data={"username": "admin@example.com", "password": "WrongPassword"}
     )
     assert login_response.status_code == 400
     assert login_response.json()["detail"] == "Incorrect password"
-
 
 def test_signup_fails_if_email_already_registered(client):
     signup_payload = {
         "name": "Eve",
         "email": "eve@example.com",
-        "password": "Str0ngP@ssword",
-        "role": "user"
+        "password": "Str0ngP@ssword"
     }
 
     # First signup
     client.post("/auth/signup", json=signup_payload)
 
-    # Second signup (same email)
+    # Second signup with same email
     response = client.post("/auth/signup", json=signup_payload)
+
     assert response.status_code == 400
     assert response.json()["detail"] == "Email already registered"

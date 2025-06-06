@@ -7,7 +7,6 @@ class UserCreate(BaseModel):
     name: str
     email: str
     password: str
-    role: Optional[str] = "user"
     image: Optional[str] = None
     # is_varified: Optional[bool] = False
 
@@ -22,7 +21,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str
-    role: str
+    role: Optional[str]
     image: Optional[str] = None
     is_varified: Optional[bool] = False
 
