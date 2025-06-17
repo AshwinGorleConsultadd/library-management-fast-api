@@ -32,9 +32,9 @@ def create_admin(db: Session = None):  # ✅ Make db optional
         )
         db.add(admin_user)
         db.commit()
-        print("✅ Admin user created!")
+        print("---- Admin user created!")
     else:
-        print("⚠️  Admin user already exists.")
+        print("---- Admin user already exists.")
 
     if own_session:
         db.close()

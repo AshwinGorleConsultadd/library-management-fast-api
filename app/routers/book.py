@@ -32,7 +32,7 @@ def update_book(
     db: Session = Depends(database.get_db),
     user=Depends(role_required(["admin"]))
 ):
-    return book.get_book(book_id, db)
+    return book.update_book(book_id, request, db)
 
 @router.delete("/{book_id}")
 def delete_book(

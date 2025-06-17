@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from unittest.mock import patch, MagicMock
-
+from unittest.mock import patch
 from app.database import Base, get_db
 from app.main import app
 from app.core.init_admin import create_admin
@@ -27,7 +27,7 @@ def setup_and_teardown_db():
 def db():
     db = TestingSessionLocal()
     try:
-        create_admin(db)  # Creates admin user in test DB
+        create_admin(db)  # Creating admin user in test DB if not exists
         yield db
     finally:
         db.close()
@@ -96,9 +96,6 @@ def test_delete_book(client: TestClient, auth_headers):
 
 # Testing through Mocking
 
-from unittest.mock import patch
-# from fastapi.testclient import TestClient
-
 # Mocking the borrow_book controller
 @patch("app.controllers.book.borrow_book")
 def test_borrow_book_mocked(mock_borrow_book, client: TestClient, auth_headers):
@@ -126,10 +123,10 @@ def test_return_book_mocked(mock_return_book, client: TestClient, auth_headers):
     assert response.status_code == 200
     assert response.json()["return_date"] == "2025-06-06"
 
-# 3. Borrow history (integration style)
+# 3. Borrow history
 def test_borrow_history(client: TestClient, auth_headers):
     books = client.get("/books", headers=auth_headers).json()
     if books:
         book_id = books[0]["id"]
         response = client.get(f"/borrow/history/{book_id}", headers=auth_headers)
-        assert response.status_code in [200, 404]  # Acceptable if no history exists`~
+        assert response.status_code in [200, 404]  # it is Acceptable if no history exists`~

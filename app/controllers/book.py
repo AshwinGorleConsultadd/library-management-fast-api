@@ -27,6 +27,7 @@ def get_book(book_id: int, db: Session):
 
 # 4. Update book
 def update_book(book_id: int, request: schemas.BookUpdateRequest, db: Session):
+    print("updating book")
     book = db.query(models.Book).filter(models.Book.id == book_id).first()
     if not book:
         return None

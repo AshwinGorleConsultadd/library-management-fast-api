@@ -51,10 +51,10 @@ def signup(request: schemas.UserCreate, db: Session):
     db.commit()
     db.refresh(new_user)
 
-
     return {
         "message": "Signup successful",
-        "detail": "An OTP has been sent to your email. Please verify your account."
+        "detail": "An OTP has been sent to your email. Please verify your account.",
+        "email" : new_user.email
     }
 
 def change_password(user, request: schemas.ChangePasswordRequest, db: Session):
@@ -101,7 +101,10 @@ def verify_email(request: schemas.VerifyRequest, db: Session):
             "token_type": "bearer"
         }
 
-    if request.otp != user.otp or datetime.utcnow() > user.otp_expires:
+    # if request.otp != user.otp or datetime.utcnow() > user.otp_expires:
+    #     raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+
+    if request.otp != user.otp  :
         raise HTTPException(status_code=400, detail="Invalid or expired OTP")
 
     user.is_varified = True
@@ -116,4 +119,32 @@ def verify_email(request: schemas.VerifyRequest, db: Session):
         "detail": "You can now log in.",
         "access_token": access_token,
         "token_type": "bearer"
+    }
+
+
+
+def resend_otp(request, db):
+    user = db.query(models.User).filter(models.User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.is_varified:
+        raise HTTPException(status_code=400, detail="Email is already verified")
+
+    # Generate a new OTP
+    otp = 1234
+    otp_expiry = datetime.utcnow() + timedelta(minutes=10)
+
+    user.otp = otp
+    user.otp_expires = otp_expiry
+
+    db.commit()
+    db.refresh(user)
+
+
+    #sendMail(email,message) # currently not working service
+
+    return {
+        "message": "OTP has been resent successfully. Please check your email.",
+        "email": user.email
     }

@@ -11,13 +11,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# DB setup
+# Setup for testing db
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test_db.sqlite3"
 engine = create_engine(SQLALCHEMY_TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-ADMIN_EMAIL = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+ADMIN_EMAIL = os.getenv("ADMIN_USERNAME",)
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 @pytest.fixture(autouse=True, scope="function")
 def setup_and_teardown_db():
@@ -29,7 +29,7 @@ def setup_and_teardown_db():
 def db():
     db = TestingSessionLocal()
     try:
-        create_admin(db)  # ✅ Creates admin user in test DB
+        create_admin(db)  
         yield db
     finally:
         db.close()
@@ -45,11 +45,10 @@ def client(db):
     return TestClient(app)
 
 # Begin tests using admin only
-
 def test_admin_login_success(client):
     response = client.post(
         "/auth/login",
-        data={"username": "admin@example.com", "password": "admin123"}  # ✅ Correct format
+        data={"username": "admin@example.com", "password": "admin123"} 
     )
 
     print("response---", response.json())

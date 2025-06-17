@@ -9,6 +9,12 @@ class UserCreate(BaseModel):
     password: str
     image: Optional[str] = None
     # is_varified: Optional[bool] = False
+class SignupRequest(BaseModel) :
+    name: str
+    email: str
+    password: str
+    confirm_password: str
+
 
 class UserUpdate(BaseModel):
     name: Optional[str]
@@ -44,12 +50,20 @@ class TokenRefreshRequest(BaseModel):
     refresh_token: str
 
 class VerifyRequest(BaseModel):
-    email: EmailStr
+    email: str
     otp: str
 
 class SignupResponse(BaseModel):
     message: str
     detail: str
+    email : str
+
+class ResendOtpResponse(BaseModel):
+    message: str
+    email: str
+
+class ResendOtpRequest(BaseModel):
+    email: str
 
 class VerifyResponse(BaseModel):
     message: str
@@ -59,6 +73,7 @@ class VerifyResponse(BaseModel):
 
 #schemas for books
 class Book(BaseModel):
+    id : int
     title: str
     author: str
     isbn: str
@@ -80,13 +95,13 @@ class BookResponse(BookBase):
     class Config:
         orm_mode = True
 
-class BookUpdateRequest (BaseModel) :
-    title: Optional[str]
-    author: Optional[str]
-    isbn: Optional[str]
-    total_copies: Optional[int]
-    borrowed_copies: Optional[int]
-    available_copies: Optional[int]
+class BookUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    author: Optional[str] = None
+    isbn: Optional[str] = None
+    total_copies: Optional[int] = None
+    borrowed_copies: Optional[int] = None
+    available_copies: Optional[int] = None
 
 class BorrowRequest(BaseModel):
     book_id: int
