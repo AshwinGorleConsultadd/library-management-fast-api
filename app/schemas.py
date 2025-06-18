@@ -6,7 +6,7 @@ from datetime import datetime
 class UserCreate(BaseModel):
     name: str
     email: str
-    password: str
+    password: Optional[str] = None
     image: Optional[str] = None
     # is_varified: Optional[bool] = False
 class SignupRequest(BaseModel) :
@@ -17,17 +17,17 @@ class SignupRequest(BaseModel) :
 
 
 class UserUpdate(BaseModel):
-    name: Optional[str]
-    email: Optional[EmailStr]
-    username: Optional[str]
-    image: Optional[str]
-    password: Optional[str]
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    image: Optional[str] = None
+    password: Optional[str] = None
 
 class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: str
-    role: Optional[str]
+    id: Optional[int] = None
+    name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
     image: Optional[str] = None
     is_varified: Optional[bool] = False
 
@@ -95,6 +95,14 @@ class BookResponse(BookBase):
     class Config:
         orm_mode = True
 
+class CreateBookRequest(BaseModel):
+    title: Optional[str] = None
+    author: Optional[str] = None
+    isbn: Optional[str] = None
+    total_copies: Optional[int] = None
+    borrowed_copies: Optional[int] = None
+    available_copies: Optional[int] = None
+
 class BookUpdateRequest(BaseModel):
     title: Optional[str] = None
     author: Optional[str] = None
@@ -133,3 +141,30 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class IssueCreate(BaseModel):
+    user_id: int
+    book_id: int
+
+class ReturnBook(BaseModel):
+    issue_id: int
+
+class IssueResponse(BaseModel):
+    id: int
+    user: UserResponse
+    book: BookResponse
+    issue_date: datetime
+    return_date: datetime | None
+
+    class Config:
+        orm_mode = True
+
+class IssuedBookResponse(BaseModel):
+    id: int
+    user: UserResponse
+    book: BookResponse
+    issue_date: datetime
+    return_date: datetime | None
+
+    class Config:
+        orm_mode = True

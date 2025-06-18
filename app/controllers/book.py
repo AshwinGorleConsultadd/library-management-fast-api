@@ -3,7 +3,7 @@ from app import models, schemas
 from datetime import datetime
 
 # 1. Create a new book
-def create_book(request: schemas.BookResponse, db: Session):
+def create_book(request: schemas.CreateBookRequest, db: Session):
     book = models.Book(
         title=request.title,
         author=request.author,

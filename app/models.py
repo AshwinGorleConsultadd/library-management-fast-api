@@ -15,7 +15,9 @@ class User(Base):
     is_varified = Column(Boolean, default=False)
     otp = Column(String, default="")
     otp_expires = Column(DATETIME, default=None)
+
     borrows = relationship("Borrow", back_populates="user")
+    issued_books = relationship("IssuedBook", back_populates="user")
 
 class Book(Base):
     __tablename__ = "books"
@@ -30,6 +32,7 @@ class Book(Base):
     available_copies = Column(Integer, default=1)
 
     borrows = relationship("Borrow", back_populates="book")
+    issued_books = relationship("IssuedBook", back_populates="book")
 
 class Borrow(Base):
     __tablename__ = "borrows"
@@ -50,3 +53,15 @@ class BlacklistedToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String, unique=True, nullable=False)
     blacklisted_at = Column(DateTime, default=datetime.utcnow)
+
+class IssuedBook(Base):
+    __tablename__ = "issued_books"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
+    issue_date = Column(DateTime, default=datetime.utcnow)
+    return_date = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="issued_books")
+    book = relationship("Book", back_populates="issued_books")

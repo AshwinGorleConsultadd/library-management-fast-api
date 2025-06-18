@@ -19,7 +19,7 @@ def get_book_by_id(book_id: int, db: Session = Depends(database.get_db)):
 
 @router.post("/", response_model=schemas.Book)
 def create_book(
-    request: schemas.Book,
+    request: schemas.CreateBookRequest,
     db: Session = Depends(database.get_db),
     user=Depends(role_required(["admin"]))
 ):
